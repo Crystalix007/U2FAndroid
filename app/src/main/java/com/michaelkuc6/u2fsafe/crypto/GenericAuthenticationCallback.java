@@ -7,18 +7,19 @@ import com.kevalpatel2106.fingerprintdialog.AuthenticationCallback;
 public abstract class GenericAuthenticationCallback implements AuthenticationCallback {
   private AuthenticationAlternativeCallback alternativeCallback;
 
-  public GenericAuthenticationCallback(AuthenticationAlternativeCallback authenticationAlternativeCallback) {
+  public GenericAuthenticationCallback(
+      AuthenticationAlternativeCallback authenticationAlternativeCallback) {
     this.alternativeCallback = authenticationAlternativeCallback;
   }
 
   @Override
   public void fingerprintAuthenticationNotSupported() {
-    alternativeCallback.doAlternative();
+    alternativeCallback.onFailure();
   }
 
   @Override
   public void hasNoFingerprintEnrolled() {
-    alternativeCallback.doAlternative();
+    alternativeCallback.onFailure();
   }
 
   @Override
@@ -29,15 +30,15 @@ public abstract class GenericAuthenticationCallback implements AuthenticationCal
 
   @Override
   public void authenticationCanceledByUser() {
-    alternativeCallback.doAlternative();
+    alternativeCallback.onFailure();
   }
 
   @Override
   public void onAuthenticationFailed() {
-    alternativeCallback.doAlternative();
+    alternativeCallback.onFailure();
   }
 
   public interface AuthenticationAlternativeCallback {
-    void doAlternative();
+    void onFailure();
   }
 }

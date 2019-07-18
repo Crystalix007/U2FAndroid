@@ -113,5 +113,4 @@ public class TextLoginFragment extends DialogFragment implements LoginPrompt {
       return null;
     }
   }
-
 }

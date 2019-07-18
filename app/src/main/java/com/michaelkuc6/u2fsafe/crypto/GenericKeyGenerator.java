@@ -87,7 +87,8 @@ public class GenericKeyGenerator implements GenericCryptoObjectGenerator.KeyGene
       switch (opmode) {
         case Cipher.ENCRYPT_MODE:
           cipher.init(opmode, key);
-          SharedPreferences.Editor prefEditor = activity.getPreferences(Context.MODE_PRIVATE).edit();
+          SharedPreferences.Editor prefEditor =
+              activity.getPreferences(Context.MODE_PRIVATE).edit();
           saveEncSettings(prefEditor, cipher, keyName);
           prefEditor.commit();
           return true;

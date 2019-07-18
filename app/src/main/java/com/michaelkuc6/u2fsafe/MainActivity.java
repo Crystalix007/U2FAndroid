@@ -1,28 +1,23 @@
 package com.michaelkuc6.u2fsafe;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
-import androidx.lifecycle.ProcessLifecycleOwner;
 
-import com.michaelkuc6.u2fsafe.utils.PrivateKeys;
+public class MainActivity extends AppCompatActivity
+/* implements LifecycleObserver */ {
+  private static final int UNLOCK_TAG = 1;
+  private byte[] passhash;
 
-public class MainActivity extends AppCompatActivity implements LifecycleObserver {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_main);
-    ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
-  }
-
-  @Override
-  protected void onPause() {
-    super.onPause();
-    PrivateKeys.closeInterface(this);
   }
 
   @Override
@@ -30,6 +25,24 @@ public class MainActivity extends AppCompatActivity implements LifecycleObserver
     super.onSaveInstanceState(outState);
   }
 
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+
+    if (requestCode == UNLOCK_TAG) {
+      if (resultCode == 0) {
+        passhash = data.getExtras().getByteArray(LoginActivity.PASSWORD_KEY);
+      }
+    }
+  }
+
+  public void login(View view) {
+    Intent loginIntent = new Intent(this, LoginActivity.class);
+    //startActivityForResult(loginIntent, UNLOCK_TAG);
+    startActivity(loginIntent);
+  }
+
+  /*
   @OnLifecycleEvent(Lifecycle.Event.ON_START)
   public void onMoveToForeground() {
     PrivateKeys.requestPassHash(this);
@@ -37,4 +50,5 @@ public class MainActivity extends AppCompatActivity implements LifecycleObserver
 
   @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
   public void onMoveToBackground() {}
+  */
 }
