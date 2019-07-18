@@ -1,0 +1,3 @@
+include ':app'
+include ':FingerprintDialogCompat:fingerprint-dialog-compat'
+project(':FingerprintDialogCompat:fingerprint-dialog-compat').projectDir = new File('FingerprintDialogCompat/fingerprint-dialog-compat')
