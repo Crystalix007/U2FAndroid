@@ -18,6 +18,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class TextLoginFragment extends DialogFragment implements LoginPrompt {
+  // Simply to avoid rainbow-table attacks
+  private static final String SALT = "YodaEvadePavestoneGrub";
   private static final String ARG_TITLE_TEXT = "titleText";
   private static final String ARG_SUBTITLE_TEXT = "subtitleText";
   private static final String ARG_BUTTON_TEXT = "buttonText";
@@ -106,9 +108,8 @@ public class TextLoginFragment extends DialogFragment implements LoginPrompt {
 
   private static byte[] hashPassword(final String password) {
     try {
-      MessageDigest messageDigest = MessageDigest.getInstance("SHA-512");
-      messageDigest.update(password.getBytes());
-      return messageDigest.digest();
+      MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+      return messageDigest.digest((password + SALT).getBytes());
     } catch (NoSuchAlgorithmException e) {
       return null;
     }

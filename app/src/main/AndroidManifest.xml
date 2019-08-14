@@ -22,7 +22,19 @@
         </activity>
         <activity
             android:name=".LoginActivity"
-            android:configChanges="orientation|screenSize"></activity>
+            android:parentActivityName=".MainActivity">
+            <!--android:configChanges="orientation|screenSize"-->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
+            android:name=".U2FActivity"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
     </application>
 
 </manifest>

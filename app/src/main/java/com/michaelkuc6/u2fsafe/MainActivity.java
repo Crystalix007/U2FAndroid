@@ -2,22 +2,29 @@ package com.michaelkuc6.u2fsafe;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.LifecycleObserver;
 
-public class MainActivity extends AppCompatActivity
-/* implements LifecycleObserver */ {
+public class MainActivity extends AppCompatActivity {
   private static final int UNLOCK_TAG = 1;
-  private byte[] passhash;
+  private static final int U2F_TAG = 2;
+  private TextView passwordSet, keyfileExists;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_main);
+
+    passwordSet = findViewById(R.id.passwordSet_text);
+
+    keyfileExists = findViewById(R.id.keyfilePresent_text);
+    keyfileExists.setText(U2FActivity.keyfileExists(this) ? R.string.yes : R.string.no);
+
+    Intent loginIntent = new Intent(this, LoginActivity.class);
+    startActivityForResult(loginIntent, UNLOCK_TAG);
   }
 
   @Override
@@ -31,24 +38,12 @@ public class MainActivity extends AppCompatActivity
 
     if (requestCode == UNLOCK_TAG) {
       if (resultCode == 0) {
-        passhash = data.getExtras().getByteArray(LoginActivity.PASSWORD_KEY);
-      }
+        passwordSet.setText(R.string.yes);
+        byte[] passhash = data.getExtras().getByteArray(LoginActivity.PASSWORD_KEY);
+        Intent u2fIntent = new Intent(this, U2FActivity.class);
+        u2fIntent.putExtra(U2FActivity.PASSHASH_KEY, passhash);
+        startActivityForResult(u2fIntent, U2F_TAG);
+      } else passwordSet.setText(R.string.no);
     }
   }
-
-  public void login(View view) {
-    Intent loginIntent = new Intent(this, LoginActivity.class);
-    //startActivityForResult(loginIntent, UNLOCK_TAG);
-    startActivity(loginIntent);
-  }
-
-  /*
-  @OnLifecycleEvent(Lifecycle.Event.ON_START)
-  public void onMoveToForeground() {
-    PrivateKeys.requestPassHash(this);
-  }
-
-  @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-  public void onMoveToBackground() {}
-  */
 }

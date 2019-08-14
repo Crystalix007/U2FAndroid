@@ -3,7 +3,6 @@ package com.michaelkuc6.u2fsafe.ui;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,22 +15,32 @@ import androidx.fragment.app.Fragment;
 
 import com.kevalpatel2106.fingerprintdialog.AuthenticationCallback;
 import com.kevalpatel2106.fingerprintdialog.FingerprintDialogBuilder;
+import com.michaelkuc6.u2fsafe.crypto.BioKeyGenerator;
 import com.michaelkuc6.u2fsafe.crypto.GenericAuthenticationCallback;
 import com.michaelkuc6.u2fsafe.crypto.GenericCryptoObjectGenerator;
-import com.michaelkuc6.u2fsafe.crypto.GenericKeyGenerator;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 
 public abstract class FingerprintLoginFragment extends Fragment implements LoginPrompt {
-  protected LoginHandler loginHandler;
-  protected final String fingerprintKey;
-  protected FailureHandler failureHandler;
-  protected final String title, subtitle, description, negativeButton;
-  protected final LoginMode loginMode;
+  private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
+  private static final String ARG_LOGIN_MODE = "LOGIN_MODE";
+  private static final String ARG_FINGERPRINT_KEY = "FINGERPRINT_KEY";
+  private static final String ARG_TITLE = "TITLE";
+  private static final String ARG_SUBTITLE = "SUBTITLE";
+  private static final String ARG_DESCRIPTION = "DESCRIPTION";
+  private static final String ARG_NEGATIVE_BUTTON = "NEGATIVE_BUTTON";
 
-  public FingerprintLoginFragment(
+  private LoginHandler loginHandler;
+  private String fingerprintKey;
+  private FailureHandler failureHandler;
+  private String title, subtitle, description, negativeButton;
+  private LoginMode loginMode;
+
+  public FingerprintLoginFragment() {}
+
+  FingerprintLoginFragment(
       LoginMode loginMode,
       String fingerprintKey,
       String title,
@@ -51,6 +60,20 @@ public abstract class FingerprintLoginFragment extends Fragment implements Login
     this.loginHandler = loginHandler;
   }
 
+  @Override
+  public void onCreate(@Nullable Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    if (savedInstanceState != null) {
+      loginMode = LoginMode.values()[savedInstanceState.getInt(ARG_LOGIN_MODE)];
+      fingerprintKey = savedInstanceState.getString(ARG_FINGERPRINT_KEY);
+      title = savedInstanceState.getString(ARG_TITLE);
+      subtitle = savedInstanceState.getString(ARG_SUBTITLE);
+      description = savedInstanceState.getString(ARG_DESCRIPTION);
+      negativeButton = savedInstanceState.getString(ARG_NEGATIVE_BUTTON);
+    }
+  }
+
   @Nullable
   @Override
   public View onCreateView(
@@ -64,7 +87,7 @@ public abstract class FingerprintLoginFragment extends Fragment implements Login
     try {
       cryptoGenerator =
           new GenericCryptoObjectGenerator(
-              getActivity(), fingerprintKey, new GenericKeyGenerator());
+              getActivity(), fingerprintKey, new BioKeyGenerator(KEYSTORE_PROVIDER));
     } catch (GenericCryptoObjectGenerator.GeneratorException ignored) {
       failureHandler.onFingerprintFailure();
       return view;
@@ -142,6 +165,22 @@ public abstract class FingerprintLoginFragment extends Fragment implements Login
     }
 
     return true;
+  }
+
+  @Override
+  public void onPause() {
+    super.onPause();
+    FingerprintDialogBuilder.close(getFragmentManager());
+  }
+
+  @Override
+  public void onSaveInstanceState(@NonNull Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt(ARG_LOGIN_MODE, loginMode.ordinal());
+    outState.putString(ARG_FINGERPRINT_KEY, fingerprintKey);
+    outState.putString(ARG_TITLE, title);
+    outState.putString(ARG_SUBTITLE, subtitle);
+    outState.putString(ARG_DESCRIPTION, description);
   }
 
   public interface FailureHandler {

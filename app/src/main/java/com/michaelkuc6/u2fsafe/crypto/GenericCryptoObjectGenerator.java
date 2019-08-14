@@ -1,7 +1,6 @@
 package com.michaelkuc6.u2fsafe.crypto;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.fingerprint.FingerprintManager;
@@ -48,8 +47,7 @@ public class GenericCryptoObjectGenerator implements CryptoObjectGenerator {
     }
 
     try {
-      if (!keyStore.containsAlias(keyName)
-          && !keyGenerator.generateKey(keyName, KEYSTORE_PROVIDER)) {
+      if (!keyStore.containsAlias(keyName) && !keyGenerator.generateKey(keyName)) {
         Toast.makeText(
                 activity,
                 "Failed to generate key to encrypt: cannot use fingerprint",
@@ -138,16 +136,6 @@ public class GenericCryptoObjectGenerator implements CryptoObjectGenerator {
     public GeneratorException(Exception source) {
       super(source);
     }
-  }
-
-  public interface KeyGenerator {
-    boolean generateKey(String keyName, String provider);
-
-    Cipher generateCipher();
-
-    boolean initCipher(Cipher cipher, int opmode, Key key, Activity activity, String keyName);
-
-    void saveEncSettings(SharedPreferences.Editor editor, Cipher cipher, String keyName);
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {}

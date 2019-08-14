@@ -4,4 +4,9 @@
     <string name="vault_subtitle">Enter password to decrypt vault</string>
     <string name="vault_button">Open</string>
     <string name="password_edit_hint">Password</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="passwordSet_label">Password Set:</string>
+    <string name="unknown">Unknown</string>
+    <string name="keyfilePresent_label">Keyfile Present:</string>
 </resources>

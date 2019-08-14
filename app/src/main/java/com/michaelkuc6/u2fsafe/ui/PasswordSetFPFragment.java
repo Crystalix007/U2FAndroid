@@ -2,15 +2,23 @@ package com.michaelkuc6.u2fsafe.ui;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.kevalpatel2106.fingerprintdialog.FingerprintDialogBuilder;
+
 public class PasswordSetFPFragment extends Fragment
     implements FingerprintLoginFragment.FailureHandler, LoginPrompt.LoginHandler {
-  private final TextLoginFragment loginFragment;
-  private final String fingerprintKey;
-  private final String passwordKey;
-  private final FingerprintLoginFragment.LoginHandler loginHandler;
+  private static final String ARG_FINGERPRINT_KEY = "FINGERPRINT";
+  private static final String ARG_PASSWORD_KEY = "PASSWORD";
+
+  private TextLoginFragment loginFragment;
+  private String fingerprintKey;
+  private String passwordKey;
+  private FingerprintLoginFragment.LoginHandler loginHandler;
+
+  public PasswordSetFPFragment() {}
 
   public PasswordSetFPFragment(
       String fingerprintKey, String passwordKey, LoginPrompt.LoginHandler loginHandler) {
@@ -25,6 +33,12 @@ public class PasswordSetFPFragment extends Fragment
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    if (savedInstanceState != null) {
+      fingerprintKey = savedInstanceState.getString(ARG_FINGERPRINT_KEY);
+      passwordKey = savedInstanceState.getString(ARG_PASSWORD_KEY);
+    }
+
     final FingerprintLoginFragment.FailureHandler failureHandler = this;
     final LoginPrompt.LoginHandler loginHandler = this;
 
@@ -44,49 +58,34 @@ public class PasswordSetFPFragment extends Fragment
             fingerprintLoginFragment.setFailureHandler(failureHandler);
             fingerprintLoginFragment.setLoginHandler(loginHandler);
 
-            /*
-                final GenericCryptoObjectGenerator cryptoGenerator =
-                        new GenericCryptoObjectGenerator(
-                                getActivity(), fingerprintKey, new GenericKeyGenerator());
-                cryptoGenerator.setAuthObject(Cipher.ENCRYPT_MODE, getActivity());
-                FingerprintDialogBuilder fingerprintDialogBuilder =
-                        new FingerprintDialogBuilder(getActivity(), cryptoGenerator)
-                                .setTitle("Lock U2F keys")
-                                .setSubtitle("Authenticate to encrypt the U2F safe")
-                                .setDescription("Press your finger onto the fingerprint sensor to lock")
-                                .setNegativeButton("Cancel");
-
-                AuthenticationCallback callback =
-                        new GenericAuthenticationCallback(
-                                new GenericAuthenticationCallback.AuthenticationAlternativeCallback() {
-                                  @Override
-                                  public void onFailure() {}
-                                }) {
-
-                          @Override
-                          public void onAuthenticationSucceeded() {
-                            SharedPreferences preferences = getActivity().getPreferences(Context.MODE_PRIVATE);
-                            Cipher cipher = cryptoGenerator.getCipher();
-                            try {
-                              String encPassword =
-                                      Base64.encodeToString(cipher.doFinal(passhash), Base64.DEFAULT);
-                              preferences.edit().putString(PASSWORD_KEY, encPassword).commit();
-                            } catch (BadPaddingException | IllegalBlockSizeException ignored) {
-                            }
-
-                            uiIsActive = false;
-                          }
-                        };
-
-                fingerprintDialogBuilder.show(activity.getSupportFragmentManager(), callback);
-              }
-                activity.getSupportFragmentManager().beginTransaction().remove(loginFragment).commit();
-            }
-            */
+            getActivity()
+                .getSupportFragmentManager()
+                .beginTransaction()
+                .add(fingerprintLoginFragment, "FINGERPRINT_LOGIN")
+                .commit();
           }
         };
     loginFragment.setLoginHandler(handler);
     loginFragment.show(getActivity().getSupportFragmentManager(), "PASSWORD_SET");
+  }
+
+  @Override
+  public void onPause() {
+    FingerprintDialogBuilder.close(getActivity().getSupportFragmentManager());
+
+    if (loginFragment != null) {
+      getActivity().getSupportFragmentManager().beginTransaction().remove(loginFragment).commit();
+    }
+
+    super.onPause();
+  }
+
+  @Override
+  public void onSaveInstanceState(@NonNull Bundle outState) {
+    super.onSaveInstanceState(outState);
+
+    outState.putString(ARG_FINGERPRINT_KEY, fingerprintKey);
+    outState.putString(ARG_PASSWORD_KEY, passwordKey);
   }
 
   @Override
