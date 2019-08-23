@@ -10,6 +10,9 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 
+import com.michaelkuc6.u2fsafe.jni.Storage;
+import com.michaelkuc6.u2fsafe.jni.U2FDevice;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -29,6 +32,8 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class U2FActivity extends FragmentActivity {
+  public static final String EXECUTABLE_DIR_KEY = "executableDir";
+  public static final String CACHE_DIR_KEY = "cacheDir";
   private static final int IV_BYTE_LENGTH = 16;
   private static final String KEYFILE_NAME = "keys";
   public static final int RESULT_FAILURE = -1;
@@ -43,10 +48,19 @@ public class U2FActivity extends FragmentActivity {
           + "/"
           + KeyProperties.ENCRYPTION_PADDING_PKCS7;
   private byte[] passhash;
+  private String executableDir, cacheDir;
   private TextView u2fDecrypted;
+  private Thread server;
+  private String u2fKeyStr;
+
+  public static volatile boolean shouldContinue;
 
   public static boolean keyfileExists(Activity activity) {
     return new File(activity.getFilesDir(), KEYFILE_NAME).exists();
+  }
+
+  static {
+    System.loadLibrary("U2FAndroid");
   }
 
   @Override
@@ -55,8 +69,16 @@ public class U2FActivity extends FragmentActivity {
 
     passhash = null;
 
-    if (savedInstanceState == null) passhash = getIntent().getByteArrayExtra(PASSHASH_KEY);
-    else passhash = savedInstanceState.getByteArray(PASSHASH_KEY);
+    if (savedInstanceState == null) {
+      passhash = getIntent().getByteArrayExtra(PASSHASH_KEY);
+      executableDir = getIntent().getStringExtra(EXECUTABLE_DIR_KEY);
+      cacheDir = getIntent().getStringExtra(CACHE_DIR_KEY);
+    }
+    else {
+      passhash = savedInstanceState.getByteArray(PASSHASH_KEY);
+      executableDir = savedInstanceState.getString(EXECUTABLE_DIR_KEY);
+      cacheDir = savedInstanceState.getString(CACHE_DIR_KEY);
+    }
 
     if (passhash == null) {
       setResult(RESULT_FAILURE);
@@ -69,6 +91,19 @@ public class U2FActivity extends FragmentActivity {
     u2fDecrypted = findViewById(R.id.u2fDecrypted_edit);
     String decrypted = decryptFile();
     u2fDecrypted.setText(decrypted);
+
+    Storage.init(decrypted);
+
+    server =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                u2fKeyStr = U2FDevice.handleTransactions(executableDir, cacheDir);
+              }
+            });
+    shouldContinue = true;
+    server.start();
   }
 
   @Override
@@ -76,7 +111,14 @@ public class U2FActivity extends FragmentActivity {
     super.onSaveInstanceState(outState);
 
     outState.putByteArray(PASSHASH_KEY, passhash);
-    encryptFile(u2fDecrypted.getText().toString());
+    outState.putString(EXECUTABLE_DIR_KEY, executableDir);
+    shouldContinue = false;
+    try {
+      server.join();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    encryptFile(u2fKeyStr);
   }
 
   private Key genKey() {

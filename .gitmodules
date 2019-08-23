@@ -1,0 +1,9 @@
+[submodule "app/src/main/cpp/U2FDevice"]
+	path = app/src/main/cpp/U2FDevice
+	url = https://github.com/Crystalix007/U2FDevice.git
+[submodule "FingerprintDialogCompat"]
+	path = FingerprintDialogCompat
+	url = https://github.com/kevalpatel2106/FingerprintDialogCompat.git
+[submodule "app/src/main/cpp/mbed-crypto"]
+	path = app/src/main/cpp/mbed-crypto
+	url = https://github.com/ARMmbed/mbed-crypto

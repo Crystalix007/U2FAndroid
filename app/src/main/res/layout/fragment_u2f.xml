@@ -4,9 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <EditText
+    <TextView
         android:id="@+id/u2fDecrypted_edit"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="text" />
+        android:layout_height="wrap_content" />
 </LinearLayout>
