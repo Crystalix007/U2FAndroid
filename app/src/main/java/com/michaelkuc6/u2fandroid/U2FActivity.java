@@ -1,4 +1,4 @@
-package com.michaelkuc6.u2fsafe;
+package com.michaelkuc6.u2fandroid;
 
 import android.app.Activity;
 import android.content.Context;
@@ -10,8 +10,8 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 
-import com.michaelkuc6.u2fsafe.jni.Storage;
-import com.michaelkuc6.u2fsafe.jni.U2FDevice;
+import com.michaelkuc6.u2fandroid.jni.Storage;
+import com.michaelkuc6.u2fandroid.jni.U2FDevice;
 
 import java.io.File;
 import java.io.FileInputStream;

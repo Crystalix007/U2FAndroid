@@ -1,4 +1,4 @@
-package com.michaelkuc6.u2fsafe.ui;
+package com.michaelkuc6.u2fandroid.ui;
 
 import android.content.Context;
 import android.os.Bundle;

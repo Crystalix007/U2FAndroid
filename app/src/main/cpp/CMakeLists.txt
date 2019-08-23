@@ -41,7 +41,7 @@ add_library(U2FAndroid SHARED
         U2FDevice/U2F_Version_APDU.cpp
         U2FDevice/U2FMessage.cpp
         U2FAndroid/Storage.cpp
-        U2FAndroid/U2FDevice.cpp)
+        U2FAndroid/U2FAndroid.cpp)
 
 add_executable(U2FAndroid_Read
         U2FAndroid/U2FAndroid_Read.cpp

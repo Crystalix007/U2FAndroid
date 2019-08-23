@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">U2FSafe</string>
+    <string name="app_name">U2FAndroid</string>
     <string name="vault_title">Open Vault</string>
     <string name="vault_subtitle">Enter password to decrypt vault</string>
     <string name="vault_button">Open</string>

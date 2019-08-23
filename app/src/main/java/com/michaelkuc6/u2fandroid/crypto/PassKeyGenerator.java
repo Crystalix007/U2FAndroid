@@ -1,4 +1,4 @@
-package com.michaelkuc6.u2fsafe.crypto;
+package com.michaelkuc6.u2fandroid.crypto;
 
 public class PassKeyGenerator extends GenericKeyGenerator {
   @Override

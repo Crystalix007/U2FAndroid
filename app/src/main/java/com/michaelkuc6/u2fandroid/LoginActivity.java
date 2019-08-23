@@ -1,4 +1,4 @@
-package com.michaelkuc6.u2fsafe;
+package com.michaelkuc6.u2fandroid;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,11 +8,11 @@ import android.widget.Toast;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
-import com.michaelkuc6.u2fsafe.ui.FingerprintLoginFragment;
-import com.michaelkuc6.u2fsafe.ui.LoginPrompt;
-import com.michaelkuc6.u2fsafe.ui.PasswordGetFPFragment;
-import com.michaelkuc6.u2fsafe.ui.PasswordSetFPFragment;
-import com.michaelkuc6.u2fsafe.ui.TextLoginFragment;
+import com.michaelkuc6.u2fandroid.ui.FingerprintLoginFragment;
+import com.michaelkuc6.u2fandroid.ui.LoginPrompt;
+import com.michaelkuc6.u2fandroid.ui.PasswordGetFPFragment;
+import com.michaelkuc6.u2fandroid.ui.PasswordSetFPFragment;
+import com.michaelkuc6.u2fandroid.ui.TextLoginFragment;
 
 public class LoginActivity extends FragmentActivity implements LoginPrompt.LoginHandler {
   private static final String FINGERPRINT_KEY = "com.michaelkuc6.U2FSafe.fingerprint";

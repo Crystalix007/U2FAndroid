@@ -1,4 +1,4 @@
-package com.michaelkuc6.u2fsafe.ui;
+package com.michaelkuc6.u2fandroid.ui;
 
 import android.app.Activity;
 import android.content.Context;
@@ -15,9 +15,9 @@ import androidx.fragment.app.Fragment;
 
 import com.kevalpatel2106.fingerprintdialog.AuthenticationCallback;
 import com.kevalpatel2106.fingerprintdialog.FingerprintDialogBuilder;
-import com.michaelkuc6.u2fsafe.crypto.BioKeyGenerator;
-import com.michaelkuc6.u2fsafe.crypto.GenericAuthenticationCallback;
-import com.michaelkuc6.u2fsafe.crypto.GenericCryptoObjectGenerator;
+import com.michaelkuc6.u2fandroid.crypto.BioKeyGenerator;
+import com.michaelkuc6.u2fandroid.crypto.GenericAuthenticationCallback;
+import com.michaelkuc6.u2fandroid.crypto.GenericCryptoObjectGenerator;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;

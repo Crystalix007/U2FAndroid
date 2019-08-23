@@ -1,4 +1,4 @@
-package com.michaelkuc6.u2fsafe.crypto;
+package com.michaelkuc6.u2fandroid.crypto;
 
 import android.app.Activity;
 import android.content.Context;
@@ -16,7 +16,7 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 
-public abstract class GenericKeyGenerator implements com.michaelkuc6.u2fsafe.crypto.KeyGenerator {
+public abstract class GenericKeyGenerator implements com.michaelkuc6.u2fandroid.crypto.KeyGenerator {
   private static final String IV_SUFFIX = "_IV";
 
   public Cipher generateCipher() {

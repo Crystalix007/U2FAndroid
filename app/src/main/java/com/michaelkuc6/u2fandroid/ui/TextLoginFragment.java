@@ -1,4 +1,4 @@
-package com.michaelkuc6.u2fsafe.ui;
+package com.michaelkuc6.u2fandroid.ui;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
-import com.michaelkuc6.u2fsafe.R;
+import com.michaelkuc6.u2fandroid.R;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

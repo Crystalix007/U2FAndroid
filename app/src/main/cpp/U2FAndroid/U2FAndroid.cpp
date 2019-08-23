@@ -17,7 +17,7 @@ string getSave()
     return result.str();
 }
 
-extern "C" JNIEXPORT jstring JNICALL Java_com_michaelkuc6_u2fsafe_jni_U2FDevice_handleTransactions(JNIEnv *env,
+extern "C" JNIEXPORT jstring JNICALL Java_com_michaelkuc6_u2fandroid_jni_U2FDevice_handleTransactions(JNIEnv *env,
                                                                                         jclass type, jstring executableDirectory, jstring cacheDir)
 {
     Controller ch{ 0xF1D00000 };
@@ -31,7 +31,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_michaelkuc6_u2fsafe_jni_U2FDevice_
     cacheDirectory = cacheDirCStr;
     env->ReleaseStringUTFChars(cacheDir, cacheDirCStr);
 
-    jclass U2FActivityClass = env->FindClass("com/michaelkuc6/u2fsafe/U2FActivity");
+    jclass U2FActivityClass = env->FindClass("com/michaelkuc6/u2fandroid/U2FActivity");
     jfieldID fieldID = env->GetStaticFieldID(U2FActivityClass, "shouldContinue", "Z");
 
     while ((env->GetStaticBooleanField(U2FActivityClass, fieldID) == JNI_TRUE))
