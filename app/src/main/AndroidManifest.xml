@@ -30,7 +30,8 @@
         </activity>
         <activity
             android:name="com.michaelkuc6.u2fandroid.U2FActivity"
-            android:parentActivityName="com.michaelkuc6.u2fandroid.MainActivity">
+            android:parentActivityName="com.michaelkuc6.u2fandroid.MainActivity"
+            android:noHistory="true">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.michaelkuc6.u2fandroid.MainActivity" />

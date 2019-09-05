@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.security.keystore.KeyProperties;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,6 +42,10 @@ public class U2FActivity extends FragmentActivity {
   public static final int RESULT_KEYFILE_SAVE_FAILED = -3;
   public static final int RESULT_SUCCESS = 0;
   public static final String PASSHASH_KEY = "passhash";
+  private static final String HID_SOCKET_PREFIX = "/u2f";
+  private static final String HID_SOCKET_SUFFIX = ".socket";
+  private static final String HID_KERNEL_SOCKET = HID_SOCKET_PREFIX + "-server" + HID_SOCKET_SUFFIX;
+  private static final String HID_APP_SOCKET = HID_SOCKET_PREFIX + "-client" + HID_SOCKET_SUFFIX;
   private static final String ALGORITHM =
       KeyProperties.KEY_ALGORITHM_AES
           + "/"
@@ -50,7 +55,8 @@ public class U2FActivity extends FragmentActivity {
   private byte[] passhash;
   private String executableDir, cacheDir;
   private TextView u2fDecrypted;
-  private Thread server;
+  private Thread client;
+  private Process server;
   private String u2fKeyStr;
 
   public static volatile boolean shouldContinue;
@@ -73,8 +79,7 @@ public class U2FActivity extends FragmentActivity {
       passhash = getIntent().getByteArrayExtra(PASSHASH_KEY);
       executableDir = getIntent().getStringExtra(EXECUTABLE_DIR_KEY);
       cacheDir = getIntent().getStringExtra(CACHE_DIR_KEY);
-    }
-    else {
+    } else {
       passhash = savedInstanceState.getByteArray(PASSHASH_KEY);
       executableDir = savedInstanceState.getString(EXECUTABLE_DIR_KEY);
       cacheDir = savedInstanceState.getString(CACHE_DIR_KEY);
@@ -94,16 +99,45 @@ public class U2FActivity extends FragmentActivity {
 
     Storage.init(decrypted);
 
-    server =
+    // Delete kernel socket if it exists already to allow waiting for server to start
+    /*
+    String[] cmd = {"su", "-c", "rm " + cacheDir + HID_KERNEL_SOCKET};
+    try {
+      Runtime.getRuntime().exec(cmd).waitFor();
+    } catch (IOException | InterruptedException ignored) {
+    }
+    */
+
+    try {
+      server =
+          new ProcessBuilder(
+                  "su", "-c", executableDir + "/U2FAndroid_Socket " + cacheDir + HID_KERNEL_SOCKET)
+              .start();
+    } catch (IOException e) {
+      Toast.makeText(this, "Unable to start U2F server", Toast.LENGTH_LONG).show();
+      finish();
+      return;
+    }
+
+    client =
         new Thread(
             new Runnable() {
               @Override
               public void run() {
-                u2fKeyStr = U2FDevice.handleTransactions(executableDir, cacheDir);
+                while (!new File(cacheDir + HID_KERNEL_SOCKET).exists() && isRunning(server)) {
+                  try {
+                    Thread.sleep(10);
+                  } catch (InterruptedException ignored) {
+                  }
+                }
+                u2fKeyStr =
+                    U2FDevice.handleTransactions(
+                        cacheDir + HID_KERNEL_SOCKET, cacheDir + HID_APP_SOCKET, cacheDir);
               }
             });
     shouldContinue = true;
-    server.start();
+
+    client.start();
   }
 
   @Override
@@ -112,9 +146,25 @@ public class U2FActivity extends FragmentActivity {
 
     outState.putByteArray(PASSHASH_KEY, passhash);
     outState.putString(EXECUTABLE_DIR_KEY, executableDir);
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+
     shouldContinue = false;
     try {
-      server.join();
+      client.join();
+      Log.d("U2FAndroid", "Attempting to kill server");
+
+      server.destroy();
+
+      try {
+        // Launched with 'su' so seems not to be killed
+        new ProcessBuilder("su", "-c", "killall U2FAndroid_Socket").start().waitFor();
+      } catch (InterruptedException | IOException e) {
+        e.printStackTrace();
+      }
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -229,6 +279,17 @@ public class U2FActivity extends FragmentActivity {
       Toast.makeText(this, "Unable to encrypt keyfile", Toast.LENGTH_LONG).show();
       setResult(RESULT_KEYFILE_SAVE_FAILED);
       finish();
+    }
+  }
+
+  // Courtesy
+  // https://stackoverflow.com/questions/5799424/check-if-process-is-running-on-windows-linux
+  boolean isRunning(Process process) {
+    try {
+      process.exitValue();
+      return false;
+    } catch (Exception e) {
+      return true;
     }
   }
 }

@@ -92,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
       try {
         InputStream in = assetManager.open(folder + "/" + binary);
         File out = new File(getFilesDir(), binary);
+        out.delete();
         FileOutputStream outStream = new FileOutputStream(out, false);
 
         int nRead;
@@ -127,6 +128,6 @@ public class MainActivity extends AppCompatActivity {
   }
 
   private String[] getBinaries() {
-    return new String[] {"U2FAndroid_Read", "U2FAndroid_Write"};
+    return new String[] {"U2FAndroid_Socket"};
   }
 }

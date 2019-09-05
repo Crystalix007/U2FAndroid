@@ -14,14 +14,15 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/mbed-crypto" "${CMAKE_CURRENT_SOUR
 add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/cpp-base64/CMakeLists.txt"
         COMMAND cp "${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/Scripts/cpp-base64-CMakeLists.txt" "${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/cpp-base64/CMakeLists.txt")
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/cpp-base64/" "${CMAKE_CURRENT_SOURCE_DIR}/ext/b64/")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/cpp-base64/" "${CMAKE_CURRENT_SOURCE_DIR}/ext/${CMAKE_ANDROID_ARCH_ABI}/b64/")
 
 add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/micro-ecc/CMakeLists.txt"
         COMMAND cp "${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/Scripts/uECC-CMakeLists.txt" "${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/micro-ecc/CMakeLists.txt")
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/micro-ecc/" "${CMAKE_CURRENT_SOURCE_DIR}/ext/uECC/")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/micro-ecc/" "${CMAKE_CURRENT_SOURCE_DIR}/ext/${CMAKE_ANDROID_ARCH_ABI}/uECC/")
 
 add_library(U2FAndroid SHARED
+        U2FDevice/Architecture.cpp
         U2FDevice/Certificates.cpp
         U2FDevice/Channel.cpp
         U2FDevice/Controller.cpp
@@ -43,15 +44,11 @@ add_library(U2FAndroid SHARED
         U2FAndroid/Storage.cpp
         U2FAndroid/U2FAndroid.cpp)
 
-add_executable(U2FAndroid_Read
-        U2FAndroid/U2FAndroid_Read.cpp
+add_executable(U2FAndroid_Socket
         U2FDevice/Streams.cpp
-        U2FDevice/IO.cpp)
-
-add_executable(U2FAndroid_Write
-        U2FAndroid/U2FAndroid_Write.cpp
-        U2FDevice/Streams.cpp
-        U2FDevice/IO.cpp)
+        U2FDevice/IO.cpp
+        U2FDevice/Architecture.cpp
+        U2FAndroid/U2FAndroid_Socket.cpp)
 
 target_include_directories(U2FAndroid PRIVATE mbed-crypto/include)
 
@@ -64,9 +61,9 @@ target_link_libraries(U2FAndroid
         cppb64
         uECC)
 
-target_link_libraries(U2FAndroid_Read
+target_link_libraries(U2FAndroid_Socket
         log)
 
-set_target_properties(U2FAndroid_Read U2FAndroid_Write
+set_target_properties(U2FAndroid_Socket
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../assets/${CMAKE_ANDROID_ARCH_ABI}")
