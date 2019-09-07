@@ -1,5 +1,6 @@
 package com.michaelkuc6.u2fandroid;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.os.Build;
@@ -8,14 +9,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
   private static final int UNLOCK_TAG = 1;
   private static final int U2F_TAG = 2;
   private TextView passwordSet, keyfileExists;
@@ -56,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
         u2fIntent.putExtra(U2FActivity.CACHE_DIR_KEY, getCacheDir().getAbsolutePath());
         startActivityForResult(u2fIntent, U2F_TAG);
       } else passwordSet.setText(R.string.no);
+    } else if (requestCode == U2F_TAG) {
+      finish();
     }
   }
 

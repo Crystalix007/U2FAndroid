@@ -99,15 +99,6 @@ public class U2FActivity extends FragmentActivity {
 
     Storage.init(decrypted);
 
-    // Delete kernel socket if it exists already to allow waiting for server to start
-    /*
-    String[] cmd = {"su", "-c", "rm " + cacheDir + HID_KERNEL_SOCKET};
-    try {
-      Runtime.getRuntime().exec(cmd).waitFor();
-    } catch (IOException | InterruptedException ignored) {
-    }
-    */
-
     try {
       server =
           new ProcessBuilder(
@@ -148,27 +139,16 @@ public class U2FActivity extends FragmentActivity {
     outState.putString(EXECUTABLE_DIR_KEY, executableDir);
   }
 
+  /*@Override
+  protected void onPause() {
+    super.onPause();
+    cleanup();
+  }*/
+
   @Override
-  protected void onDestroy() {
-    super.onDestroy();
-
-    shouldContinue = false;
-    try {
-      client.join();
-      Log.d("U2FAndroid", "Attempting to kill server");
-
-      server.destroy();
-
-      try {
-        // Launched with 'su' so seems not to be killed
-        new ProcessBuilder("su", "-c", "killall U2FAndroid_Socket").start().waitFor();
-      } catch (InterruptedException | IOException e) {
-        e.printStackTrace();
-      }
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    encryptFile(u2fKeyStr);
+  protected void onStop() {
+    super.onStop();
+    cleanup();
   }
 
   private Key genKey() {
@@ -291,5 +271,25 @@ public class U2FActivity extends FragmentActivity {
     } catch (Exception e) {
       return true;
     }
+  }
+
+  private void cleanup() {
+    shouldContinue = false;
+    try {
+      client.join();
+      Log.d("U2FAndroid", "Attempting to kill server");
+
+      server.destroy();
+      try {
+        // Launched with 'su' so seems not to be killed
+        new ProcessBuilder("su", "-c", "killall U2FAndroid_Socket").start().waitFor();
+      } catch (InterruptedException | IOException e) {
+        e.printStackTrace();
+      }
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    encryptFile(u2fKeyStr);
+    finish();
   }
 }

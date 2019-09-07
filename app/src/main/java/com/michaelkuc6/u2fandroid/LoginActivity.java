@@ -58,12 +58,6 @@ public class LoginActivity extends FragmentActivity implements LoginPrompt.Login
 
   @Override
   public void handleLogin(byte[] passwordHash) {
-    Toast.makeText(
-            this,
-            "Got a hash: " + Base64.encodeToString(passwordHash, Base64.DEFAULT),
-            Toast.LENGTH_LONG)
-        .show();
-
     Intent result = new Intent();
     result.putExtra(PASSWORD_KEY, passwordHash);
 

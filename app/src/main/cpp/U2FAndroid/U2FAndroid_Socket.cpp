@@ -10,12 +10,14 @@
 #include <sys/un.h>
 #include <poll.h>
 #include <unistd.h>
+#include <string>
 
 volatile bool killed = false;
 
 void signalCallback(int signum);
 
-#define HID_DEV "/dev/hidg2"
+const constexpr char HID_DEV[]{ "/dev/hidg2" };
+const constexpr char programTag[]{ "U2FAndroid_Socket" };
 
 using namespace std;
 
@@ -41,12 +43,9 @@ int main(int argc, char* argv[]) {
 
 	// Does pipe exist at argv[1] path
 	if (access(argv[1], F_OK) != -1) {
-		__android_log_print(ANDROID_LOG_DEBUG, "U2FAndroid_Socket", "Deleting existing file at %s",
+		__android_log_print(ANDROID_LOG_DEBUG, programTag, "Deleting existing file at %s",
 		                    argv[1]);
 		// Attempt to clean up pipe that hung around from last time
-		// may need
-		// unlink(argv[1]); // Overwrite existing connection
-		// instead
 		if (remove(argv[1]) != 0)
 			return 7;
 	}
@@ -60,7 +59,7 @@ int main(int argc, char* argv[]) {
 	appServerAddr.sun_family = AF_UNIX;
 	strncpy(appServerAddr.sun_path, argv[1], sizeof(appServerAddr.sun_path) - 1);
 
-	if (bind(appServerFD, (sockaddr*)&appServerAddr, sizeof(appServerAddr)) == -1)
+	if (::bind(appServerFD, (sockaddr*)&appServerAddr, sizeof(appServerAddr)) == -1)
 		return 2;
 
 	if (chmod(argv[1], 0666) == -1) {
@@ -70,14 +69,18 @@ int main(int argc, char* argv[]) {
 	if (listen(appServerFD, 1) == -1)
 		return 3;
 
-	__android_log_print(ANDROID_LOG_DEBUG, "U2FAndroid_Socket", "Waiting for connections");
+	__android_log_print(ANDROID_LOG_DEBUG, programTag, "Waiting for connections");
 
 	int appClientFD;
 
 	appClientFD = accept4(appServerFD, nullptr, nullptr, SOCK_CLOEXEC);
 
-	if (appClientFD == -1)
+	if (appClientFD == -1) {
+		__android_log_print(ANDROID_LOG_DEBUG, programTag, "Failed to accept client: %d", errno);
+		if (errno == EINTR)
+			__android_log_print(ANDROID_LOG_DEBUG, programTag, "Interrupted whilst waiting for connections. Closing.");
 		return 10;
+	}
 
 	// Use custom deleter for exception safety
 	const auto appServerSocketDeleter = [&argv, appClientFD](const int* fd) {
@@ -108,18 +111,22 @@ int main(int argc, char* argv[]) {
 	uint8_t krbSize = 0;
 	uint8_t arbSize = 0;
 
-	__android_log_print(ANDROID_LOG_DEBUG, "U2FAndroid_Socket",
+	__android_log_print(ANDROID_LOG_DEBUG, programTag,
 	                    "Starting U2F server, communicating via %s", argv[1]);
 
-	signal(SIGTERM, signalCallback);
-	signal(SIGINT, signalCallback);
+	bool peerClosedConnection = false;
 
 	pollfd readFDs[2] = {
 			{ *kernelPipe, POLLIN, 0 },
 			{ appClientFD, POLLIN, 0 } };
 
+	signal(SIGTERM, signalCallback);
+	signal(SIGINT, signalCallback);
+
 	while (!killed) {
 		int ready = ppoll(readFDs, 2, &intervalDelay, nullptr);
+
+		peerClosedConnection = peerClosedConnection || (readFDs[1].revents & POLLHUP);
 
 		int readCount;
 
@@ -137,7 +144,7 @@ int main(int argc, char* argv[]) {
 					// the rest
 					int writeCount = send(appClientFD, kernelReadBuffer, HID_RPT_SIZE, 0);
 					if (writeCount < 0) {
-						__android_log_print(ANDROID_LOG_WARN, "U2FAndroid_Socket",
+						__android_log_print(ANDROID_LOG_WARN, programTag,
 											"Failed to write to app with errno %d", errno);
 					}
 					krbSize = 0;
@@ -152,6 +159,11 @@ int main(int argc, char* argv[]) {
 				if (errno != EAGAIN)
 					return 6;
 			} else {
+				if (peerClosedConnection && readCount == 0) {
+					__android_log_print(ANDROID_LOG_DEBUG, programTag, "Peer closed connection");
+					break;
+				}
+
 				arbSize += readCount;
 
 				if (arbSize == HID_RPT_SIZE) {
@@ -159,7 +171,7 @@ int main(int argc, char* argv[]) {
 					// the rest
 					int writeCount = write(*kernelPipe, appReadBuffer, HID_RPT_SIZE);
 					if (writeCount < 0) {
-						__android_log_print(ANDROID_LOG_WARN, "U2FAndroid_Socket",
+						__android_log_print(ANDROID_LOG_WARN, programTag,
 											"Failed to write to kernel with errno %d", errno);
 					}
 					arbSize = 0;
@@ -168,10 +180,10 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	__android_log_print(ANDROID_LOG_DEBUG, "U2FAndroid_Socket", "Closing U2F server");
+	__android_log_print(ANDROID_LOG_DEBUG, programTag, "Closing U2F server");
 }
 
 void signalCallback([[maybe_unused]] int signum) {
-	__android_log_print(ANDROID_LOG_DEBUG, "U2FAndroid_Socket", "U2F server kill request");
+	__android_log_print(ANDROID_LOG_DEBUG, programTag, "U2F server kill request");
 	killed = true;
 }
