@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Display;
 import android.widget.TextView;
 import android.widget.Toast;
 

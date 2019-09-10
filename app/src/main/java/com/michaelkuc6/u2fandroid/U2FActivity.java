@@ -97,17 +97,19 @@ public class U2FActivity extends FragmentActivity {
     String decrypted = decryptFile();
     u2fDecrypted.setText(decrypted);
 
-    Storage.init(decrypted);
+    Storage.init(decrypted, cacheDir + HID_KERNEL_SOCKET, cacheDir + HID_APP_SOCKET, cacheDir);
 
     try {
       server =
           new ProcessBuilder(
                   "su", "-c", executableDir + "/U2FAndroid_Socket " + cacheDir + HID_KERNEL_SOCKET)
               .start();
+      Thread.sleep(100);
     } catch (IOException e) {
       Toast.makeText(this, "Unable to start U2F server", Toast.LENGTH_LONG).show();
       finish();
       return;
+    } catch (InterruptedException ignored) {
     }
 
     client =
@@ -115,15 +117,14 @@ public class U2FActivity extends FragmentActivity {
             new Runnable() {
               @Override
               public void run() {
-                while (!new File(cacheDir + HID_KERNEL_SOCKET).exists() && isRunning(server)) {
-                  try {
-                    Thread.sleep(10);
-                  } catch (InterruptedException ignored) {
-                  }
+                Storage.start();
+
+                while (shouldContinue) {
+                  U2FDevice.handleTransaction();
                 }
-                u2fKeyStr =
-                    U2FDevice.handleTransactions(
-                        cacheDir + HID_KERNEL_SOCKET, cacheDir + HID_APP_SOCKET, cacheDir);
+
+                u2fKeyStr = U2FDevice.getResult();
+                Storage.stop();
               }
             });
     shouldContinue = true;
@@ -139,16 +140,11 @@ public class U2FActivity extends FragmentActivity {
     outState.putString(EXECUTABLE_DIR_KEY, executableDir);
   }
 
-  /*@Override
-  protected void onPause() {
-    super.onPause();
-    cleanup();
-  }*/
-
   @Override
   protected void onStop() {
     super.onStop();
     cleanup();
+    finish();
   }
 
   private Key genKey() {
@@ -262,34 +258,15 @@ public class U2FActivity extends FragmentActivity {
     }
   }
 
-  // Courtesy
-  // https://stackoverflow.com/questions/5799424/check-if-process-is-running-on-windows-linux
-  boolean isRunning(Process process) {
-    try {
-      process.exitValue();
-      return false;
-    } catch (Exception e) {
-      return true;
-    }
-  }
-
   private void cleanup() {
     shouldContinue = false;
     try {
       client.join();
       Log.d("U2FAndroid", "Attempting to kill server");
-
       server.destroy();
-      try {
-        // Launched with 'su' so seems not to be killed
-        new ProcessBuilder("su", "-c", "killall U2FAndroid_Socket").start().waitFor();
-      } catch (InterruptedException | IOException e) {
-        e.printStackTrace();
-      }
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
     encryptFile(u2fKeyStr);
-    finish();
   }
 }
