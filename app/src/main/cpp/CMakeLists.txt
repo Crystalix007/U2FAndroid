@@ -4,6 +4,10 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/U2FDevice/Certificates.cpp")
+    message(SEND_ERROR "Please run `GenCertificates.sh` in app/src/main/cpp/U2FDevice first")
+endif()
+
 set(ENABLE_PROGRAMS OFF CACHE BOOL "" FORCE)
 set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
 
