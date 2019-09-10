@@ -35,7 +35,7 @@ using namespace std;
 //  8 - unable to open file-descriptor for app socket
 //  9 - unable to make the app-side socket world read-writeable
 // 10 - unable to accept client connection to app-side socket
-int main(int argc, char* argv[]) {
+int run(int argc, char* argv[]) {
 	const constexpr timespec intervalDelay{ 0, 10'000'000 };
 
 	if (argc != 2)
@@ -81,6 +81,8 @@ int main(int argc, char* argv[]) {
 			__android_log_print(ANDROID_LOG_DEBUG, programTag, "Interrupted whilst waiting for connections. Closing.");
 		return 10;
 	}
+
+	__android_log_print(ANDROID_LOG_DEBUG, programTag, "Accepted client");
 
 	// Use custom deleter for exception safety
 	const auto appServerSocketDeleter = [&argv, appClientFD](const int* fd) {
@@ -181,6 +183,11 @@ int main(int argc, char* argv[]) {
 	}
 
 	__android_log_print(ANDROID_LOG_DEBUG, programTag, "Closing U2F server");
+	return 0;
+}
+
+int main(int argc, char* argv[]) {
+	__android_log_print(ANDROID_LOG_DEBUG, programTag, "Server completed with result: %d", run(argc, argv));
 }
 
 void signalCallback([[maybe_unused]] int signum) {
