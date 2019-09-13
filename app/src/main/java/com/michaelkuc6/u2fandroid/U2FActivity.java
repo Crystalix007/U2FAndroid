@@ -1,7 +1,9 @@
 package com.michaelkuc6.u2fandroid;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.security.keystore.KeyProperties;
 import android.util.Log;
@@ -32,7 +34,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-public class U2FActivity extends FragmentActivity {
+public class U2FActivity extends FragmentActivity implements DialogInterface.OnClickListener {
   public static final String EXECUTABLE_DIR_KEY = "executableDir";
   public static final String CACHE_DIR_KEY = "cacheDir";
   private static final int IV_BYTE_LENGTH = 16;
@@ -112,23 +114,10 @@ public class U2FActivity extends FragmentActivity {
     } catch (InterruptedException ignored) {
     }
 
-    client =
-        new Thread(
-            new Runnable() {
-              @Override
-              public void run() {
-                Storage.start();
-
-                while (shouldContinue) {
-                  U2FDevice.handleTransaction();
-                }
-
-                u2fKeyStr = U2FDevice.getResult();
-                Storage.stop();
-              }
-            });
+    client = clientGenerator(false);
     shouldContinue = true;
 
+    Storage.start();
     client.start();
   }
 
@@ -262,11 +251,60 @@ public class U2FActivity extends FragmentActivity {
     shouldContinue = false;
     try {
       client.join();
+      u2fKeyStr = U2FDevice.getResult();
       Log.d("U2FAndroid", "Attempting to kill server");
-      server.destroy();
+      Storage.stop();
+      server.waitFor();
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
     encryptFile(u2fKeyStr);
+  }
+
+  @Override
+  public void onClick(DialogInterface dialogInterface, int button) {
+    boolean authorised = false;
+
+    switch (button) {
+      case DialogInterface.BUTTON_POSITIVE:
+        authorised = true;
+      case DialogInterface.BUTTON_NEGATIVE:
+        try {
+          client.join();
+        } catch (InterruptedException ignored) {
+        }
+        client = clientGenerator(authorised);
+        client.start();
+    }
+  }
+
+  private Thread clientGenerator(final boolean initialAuthorisation) {
+    final U2FActivity context = this;
+
+    return new Thread(
+        new Runnable() {
+          @Override
+          public void run() {
+            boolean authorisation = initialAuthorisation;
+
+            while (shouldContinue) {
+              if (!U2FDevice.handleTransaction(authorisation)) {
+                context.runOnUiThread(
+                    new Runnable() {
+                      @Override
+                      public void run() {
+                        new AlertDialog.Builder(context)
+                            .setMessage("Do you wish to authorise this action")
+                            .setPositiveButton("Yes", context)
+                            .setNegativeButton("No", context)
+                            .show();
+                      }
+                    });
+                return;
+              }
+              authorisation = false;
+            }
+          }
+        });
   }
 }

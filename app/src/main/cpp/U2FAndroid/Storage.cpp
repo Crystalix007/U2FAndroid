@@ -2,6 +2,7 @@
 #include "../U2FDevice/IO.hpp"
 #include "../U2FDevice/Storage.hpp"
 #include "../U2FDevice/Streams.hpp"
+#include "Storage.hpp"
 #include <jni.h>
 #include <sstream>
 
@@ -38,4 +39,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_michaelkuc6_u2fandroid_jni_Storage_st
 
 extern "C" JNIEXPORT void JNICALL Java_com_michaelkuc6_u2fandroid_jni_Storage_stop(JNIEnv *, jclass) {
 	closeStreams();
+	getPending().reset();
+}
+
+unique_ptr<U2FMessage>& getPending() {
+	static unique_ptr<U2FMessage> pending{};
+	return pending;
 }
