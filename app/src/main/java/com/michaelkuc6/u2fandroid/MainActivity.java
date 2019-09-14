@@ -39,6 +39,11 @@ public class MainActivity extends Activity {
   }
 
   @Override
+  protected void onStop() {
+    super.onStop();
+  }
+
+  @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
   }
@@ -58,7 +63,7 @@ public class MainActivity extends Activity {
         startActivityForResult(u2fIntent, U2F_TAG);
       } else passwordSet.setText(R.string.no);
     } else if (requestCode == U2F_TAG) {
-      finish();
+      //finish();
     }
   }
 

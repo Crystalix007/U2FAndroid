@@ -13,8 +13,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name="com.michaelkuc6.u2fandroid.MainActivity"
-            android:configChanges="orientation|screenSize"
-            android:excludeFromRecents="true">
+            android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

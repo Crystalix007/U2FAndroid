@@ -59,7 +59,6 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
   private TextView u2fDecrypted;
   private Thread client;
   private Process server;
-  private String u2fKeyStr;
 
   public static volatile boolean shouldContinue;
 
@@ -75,6 +74,7 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    setResult(RESULT_SUCCESS);
     passhash = null;
 
     if (savedInstanceState == null) {
@@ -96,6 +96,11 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
     setContentView(R.layout.fragment_u2f);
 
     u2fDecrypted = findViewById(R.id.u2fDecrypted_edit);
+  }
+
+  @Override
+  protected void onStart() {
+    super.onStart();
     String decrypted = decryptFile();
     u2fDecrypted.setText(decrypted);
 
@@ -103,9 +108,9 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
 
     try {
       server =
-          new ProcessBuilder(
-                  "su", "-c", executableDir + "/U2FAndroid_Socket " + cacheDir + HID_KERNEL_SOCKET)
-              .start();
+              new ProcessBuilder(
+                      "su", "-c", executableDir + "/U2FAndroid_Socket " + cacheDir + HID_KERNEL_SOCKET)
+                      .start();
       Thread.sleep(100);
     } catch (IOException e) {
       Toast.makeText(this, "Unable to start U2F server", Toast.LENGTH_LONG).show();
@@ -132,8 +137,14 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
   @Override
   protected void onStop() {
     super.onStop();
-    cleanup();
-    finish();
+
+    if (shouldContinue) {
+      cleanup();
+
+      if (!isFinishing()) {
+        finish();
+      }
+    }
   }
 
   private Key genKey() {
@@ -147,7 +158,6 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
       cipher = Cipher.getInstance(ALGORITHM);
     } catch (NoSuchPaddingException | NoSuchAlgorithmException e) {
       setResult(RESULT_FAILURE);
-      finish();
       return null;
     }
 
@@ -172,7 +182,6 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
     } catch (IOException e) {
       Toast.makeText(this, "Keyfile unable to read", Toast.LENGTH_LONG).show();
       setResult(RESULT_FAILURE);
-      finish();
       return null;
     }
 
@@ -206,6 +215,10 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
   private String decryptFile() {
     Cipher dCipher = genCipher();
 
+    if (dCipher == null) {
+      return null;
+    }
+
     try {
       byte[] fileContents = getFile();
 
@@ -225,13 +238,16 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
         | InvalidKeyException e) {
       Toast.makeText(this, "Unable to decrypt keyfile", Toast.LENGTH_LONG).show();
       setResult(RESULT_KEY_BAD);
-      finish();
       return null;
     }
   }
 
   private void encryptFile(String text) {
     Cipher eCipher = genCipher();
+
+    if (eCipher == null) {
+      return;
+    }
 
     try {
       eCipher.init(Cipher.ENCRYPT_MODE, genKey());
@@ -243,12 +259,13 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
         | InvalidKeyException e) {
       Toast.makeText(this, "Unable to encrypt keyfile", Toast.LENGTH_LONG).show();
       setResult(RESULT_KEYFILE_SAVE_FAILED);
-      finish();
     }
   }
 
   private void cleanup() {
     shouldContinue = false;
+    String u2fKeyStr = null;
+
     try {
       client.join();
       u2fKeyStr = U2FDevice.getResult();
@@ -259,6 +276,7 @@ public class U2FActivity extends FragmentActivity implements DialogInterface.OnC
       e.printStackTrace();
     }
     encryptFile(u2fKeyStr);
+    Log.d("U2FAactivity", "Finally finished cleanup");
   }
 
   @Override
